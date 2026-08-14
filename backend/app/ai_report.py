@@ -49,7 +49,7 @@ def generate_ai_report(
 
 
     try:
-        client = OpenAI(api_key=api_key)    
+        client = OpenAI(api_key=api_key, timeout=30.0, max_retries=2)    
 
         response = client.responses.create(
             model=model,
