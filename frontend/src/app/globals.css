@@ -1,0 +1,183 @@
+:root {
+  background: #f4f7fb;
+  color: #172033;
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+
+.eyebrow {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.16em;
+}
+
+h1 {
+  max-width: 720px;
+  margin: 16px 0;
+  font-size: 42px;
+  line-height: 1.2;
+}
+
+h2,
+h3 {
+  margin-top: 0;
+}
+
+.description {
+  color: #64748b;
+  font-size: 18px;
+}
+
+.upload-card,
+.results {
+  margin-top: 32px;
+  border-radius: 18px;
+  background: white;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgb(15 23 42 / 8%);
+}
+
+form {
+  display: grid;
+  gap: 12px;
+}
+
+input[type="file"] {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+button {
+  width: fit-content;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 12px 20px;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.selected-file {
+  color: #475569;
+}
+
+.error-message {
+  white-space: pre-line;
+  color: #dc2626;
+}
+
+.result-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 20px;
+}
+
+.alert-section,
+.table-section {
+  margin-top: 28px;
+}
+
+.alert-list {
+  display: grid;
+  gap: 12px;
+}
+
+.alert-card {
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  background: #fffbeb;
+  padding: 16px;
+}
+
+.alert-title {
+  margin: 0 0 6px;
+  font-weight: bold;
+}
+
+.alert-card p {
+  margin: 4px 0;
+}
+
+.alert-card small {
+  color: #92400e;
+}
+
+.empty-message {
+  color: #64748b;
+}
+
+.report-section {
+  margin-top: 28px;
+}
+
+.ai-report {
+  margin: 0;
+  white-space: pre-wrap;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 18px;
+  color: #334155;
+  font: inherit;
+  line-height: 1.8;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  color: #64748b;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 32px 16px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  .result-header {
+    align-items: start;
+    flex-direction: column;
+  }
+}

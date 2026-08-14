@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Insight Reporter</title>
+</head>
+<body>
+    <main>
+        <h1>Ad Insight Reporter</h1>
+
+        <p>
+            広告データを分析し、異常検知と日報生成を行うシステムです
+        </p>
+
+        <section>
+            <h2>広告データをアップロード</h2>
+
+            <form 
+            action="/upload"
+            method="post"
+            enctype="multipart/form-data"
+            >
+                <label for="csv_file">CSVファイル</label>
+                <input
+                id="csv_file"
+                name="csv_file"
+                type="file"
+                accept=".csv"
+                required
+                >
+                <button type="submit">分析を開始</button>
+            </form>
+
+            {% if alerts %}
+    <h2>異常検知</h2>
+
+    <ul>
+        {% for alert in alerts %}
+            <li>
+                <strong>{{ alert.campaign }}</strong>
+                （{{ alert.type }}）：
+                {{ alert.message }}
+                <br>
+                前週：{{ alert.previous_value }}{{ alert.unit }}
+                <br>
+                今週：{{ alert.current_value }}{{ alert.unit }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>検出された異常はありません。</p>
+{% endif %}
+            {% if error %}
+                <p style="color: red;">{{ error }}</p>
+            {% endif %}
+
+            {% if validation_errors %}
+                <ul>
+                    {% for validation_error in validation_errors %}
+                        <li>{{ validation_error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if message %}
+                <p>{{ message}}</p>
+                <p>取り込みID：{{ import_job_id }}</p>
+                <p>ファイル名: {{file_name}}</p>
+                <p>行数: {{ row_count }}</p>
+                <p>列: {{columns}}</p>
+            {% endif %}
+            {% if summary %}
+    <h2>キャンペーン別集計</h2>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>キャンペーン</th>
+                <th>表示回数</th>
+                <th>クリック数</th>
+                <th>広告費</th>
+                <th>CV</th>
+                <th>売上</th>
+                <th>CTR</th>
+                <th>CPA</th>
+                <th>ROAS</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in summary %}
+                <tr>
+                    <td>{{ row.campaign }}</td>
+                    <td>{{ row.impressions }}</td>
+                    <td>{{ row.clicks }}</td>
+                    <td>{{ row.cost }}</td>
+                    <td>{{ row.conversions }}</td>
+                    <td>{{ row.revenue }}</td>
+                    <td>{{ row.ctr }}%</td>
+                    <td>{{ row.cpa }}</td>
+                    <td>{{ row.roas }}%</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+        </section>
+    </main>
+</body>
