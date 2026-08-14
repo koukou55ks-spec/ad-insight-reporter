@@ -29,9 +29,9 @@ def generate_ai_report(
 
     prompt = f"""
 
-    あなたは広告運用アシスタントです。
+    あなたは広告運用アシスタントです
 
-    以下はPythonで計算済みの広告分析結果です。
+    以下はPythonで計算済みの広告分析結果です
     数値を再計算したり、存在しない事実を追加したりせずに、
     担当者が次に確認すべきことをわかりやすくまとめてください。
 
@@ -49,7 +49,7 @@ def generate_ai_report(
 
 
     try:
-        client = OpenAI(api_key=api_key)    
+        client = OpenAI(api_key=api_key, timeout=30.0, max_retries=2)    
 
         response = client.responses.create(
             model=model,
