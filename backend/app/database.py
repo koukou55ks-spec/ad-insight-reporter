@@ -1,51 +1,87 @@
-import sqlite3
+import os
 from pathlib import Path
 
-DATABASE_PATH = Path("app/ad_insight.db")
+from dotenv import load_dotenv
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    text,
+    UniqueConstraint,
+    create_engine,
+)
 
-def get_connection() -> sqlite3.Connection:
-    connection = sqlite3.connect(DATABASE_PATH)
-    connection.row_factory = sqlite3.Row
-    return connection
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///app/ad_insight.db",
+)
+
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args=connect_args,
+    pool_pre_ping=True,
+)
+
+metadata = MetaData()
+
+import_jobs = Table(
+    "import_jobs",
+    metadata,
+    # SQLAlchemy maps this to an auto-incrementing identity column on PostgreSQL.
+    Column("id", Integer, primary_key=True),
+    Column("file_name", String(255), nullable=False),
+    Column("status", String(32), nullable=False),
+    Column("imported_rows", Integer, nullable=False, default=0),
+    Column("error_count", Integer, nullable=False, default=0),
+    Column(
+        "created_at",
+        DateTime,
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    ),
+)
+
+ad_results = Table(
+    "ad_results",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column(
+        "import_job_id",
+        Integer,
+        ForeignKey("import_jobs.id"),
+        nullable=False,
+    ),
+    Column("result_date", String(10), nullable=False),
+    Column("campaign", String(255), nullable=False),
+    Column("impressions", Integer, nullable=False),
+    Column("clicks", Integer, nullable=False),
+    Column("cost", Integer, nullable=False),
+    Column("conversions", Integer, nullable=False),
+    Column("revenue", Integer, nullable=False),
+    UniqueConstraint(
+        "import_job_id",
+        "result_date",
+        "campaign",
+        name="uq_ad_results_import_date_campaign",
+    ),
+)
+
+
+def get_connection():
+    """Return a SQLAlchemy connection for SQLite or PostgreSQL."""
+    return engine.connect()
+
 
 def initialize_database() -> None:
-    connection = get_connection()
-
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS import_jobs(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_name TEXT NOT NULL,
-        status TEXT NOT NULL,
-        imported_rows INTEGER NOT NULL DEFAULT 0,
-        error_count INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS ad_results (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        import_job_id INTEGER NOT NULL,
-        result_date TEXT NOT NULL,
-        campaign TEXT NOT NULL,
-        impressions INTEGER NOT NULL,
-        clicks INTEGER NOT NULL,
-        cost INTEGER NOT NULL,
-        conversions INTEGER NOT NULL,
-        revenue INTEGER NOT NULL,
-        FOREIGN KEY (import_job_id)
-            REFERENCES import_jobs(id),
-        UNIQUE(
-        import_job_id,
-        result_date,
-        campaign
-        )
-    )
-    """
-    )
-
-    connection.commit()
-    connection.close()
+    """Create the schema if it does not exist yet."""
+    metadata.create_all(engine)

@@ -11,6 +11,7 @@ import pandas as pd
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 
 
@@ -28,6 +29,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://192.168.68.50",
         "http://192.168.68.50:3000",
+        "https://ad-insight-reporter.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -75,21 +77,22 @@ def save_ad_results(
         ).astype(int)
     
     records = [
-        (
-            import_job_id,
-            row["date"],
-            row["campaign"],
-            row["impressions"],
-            row["clicks"],
-            row["cost"],
-            row["conversions"],
-            row["revenue"],
-        )
+        {
+            "import_job_id": import_job_id,
+            "result_date": row["date"],
+            "campaign": row["campaign"],
+            "impressions": row["impressions"],
+            "clicks": row["clicks"],
+            "cost": row["cost"],
+            "conversions": row["conversions"],
+            "revenue": row["revenue"],
+        }
         for _, row in data.iterrows()
     ]
 
-    connection.executemany(
-        """
+    connection.execute(
+        text(
+            """
         INSERT INTO ad_results(
         import_job_id,
         result_date,
@@ -100,8 +103,18 @@ def save_ad_results(
         conversions,
         revenue
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
+        VALUES (
+            :import_job_id,
+            :result_date,
+            :campaign,
+            :impressions,
+            :clicks,
+            :cost,
+            :conversions,
+            :revenue
+        )
+        """
+        ),
         records,
     )
 
@@ -172,25 +185,33 @@ async def upload_csv(
     connection = get_connection()
 
     try:
-        cursor = connection.execute(
-            """
+        result = connection.execute(
+            text(
+                """
             INSERT INTO import_jobs (
                 file_name,
                 status,
                 imported_rows,
                 error_count
             )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                csv_file.filename or "unknown.csv",
-                "success",
-                len(df),
-                0,
+            VALUES (
+                :file_name,
+                :status,
+                :imported_rows,
+                :error_count
+            )
+            RETURNING id
+            """
             ),
+            {
+                "file_name": csv_file.filename or "unknown.csv",
+                "status": "success",
+                "imported_rows": len(df),
+                "error_count": 0,
+            },
         )
 
-        import_job_id = cursor.lastrowid
+        import_job_id = result.scalar_one()
 
         save_ad_results(
             connection,
@@ -272,25 +293,33 @@ async def import_csv_api(
     connection = get_connection()
 
     try:
-        cursor = connection.execute(
-            """
+        result = connection.execute(
+            text(
+                """
             INSERT INTO import_jobs (
                 file_name,
                 status,
                 imported_rows,
                 error_count
             )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                csv_file.filename or "unknown.csv",
-                "success",
-                len(df),
-                0,
+            VALUES (
+                :file_name,
+                :status,
+                :imported_rows,
+                :error_count
+            )
+            RETURNING id
+            """
             ),
+            {
+                "file_name": csv_file.filename or "unknown.csv",
+                "status": "success",
+                "imported_rows": len(df),
+                "error_count": 0,
+            },
         )
 
-        import_job_id = cursor.lastrowid
+        import_job_id = result.scalar_one()
 
         save_ad_results(
             connection,
