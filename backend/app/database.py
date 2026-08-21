@@ -1,34 +1,22 @@
-import os
-from pathlib import Path
-
-from dotenv import load_dotenv
 from sqlalchemy import (
     Column,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
     MetaData,
+    Numeric,
     String,
     Table,
-    text,
     UniqueConstraint,
     create_engine,
+    text,
 )
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
-
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///app/ad_insight.db",
-)
-
-connect_args = {}
-if DATABASE_URL.startswith("sqlite"):
-    connect_args["check_same_thread"] = False
+from app.settings import settings
 
 engine = create_engine(
-    DATABASE_URL,
-    connect_args=connect_args,
+    settings.database_url,
     pool_pre_ping=True,
 )
 
@@ -61,13 +49,13 @@ ad_results = Table(
         ForeignKey("import_jobs.id"),
         nullable=False,
     ),
-    Column("result_date", String(10), nullable=False),
+    Column("result_date", Date, nullable=False),
     Column("campaign", String(255), nullable=False),
     Column("impressions", Integer, nullable=False),
     Column("clicks", Integer, nullable=False),
-    Column("cost", Integer, nullable=False),
+    Column("cost", Numeric(18, 2), nullable=False),
     Column("conversions", Integer, nullable=False),
-    Column("revenue", Integer, nullable=False),
+    Column("revenue", Numeric(18, 2), nullable=False),
     UniqueConstraint(
         "import_job_id",
         "result_date",
@@ -78,10 +66,5 @@ ad_results = Table(
 
 
 def get_connection():
-    """Return a SQLAlchemy connection for SQLite or PostgreSQL."""
+    """Return a SQLAlchemy connection to PostgreSQL."""
     return engine.connect()
-
-
-def initialize_database() -> None:
-    """Create the schema if it does not exist yet."""
-    metadata.create_all(engine)

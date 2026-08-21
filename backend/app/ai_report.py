@@ -1,26 +1,23 @@
 import json
-import os
+import logging
 
-from pathlib import Path
 from openai import OpenAI
 
-from dotenv import load_dotenv
+from app.settings import settings
 
-load_dotenv(
-    Path(__file__).resolve().parents[1] / ".env"
-)
+logger = logging.getLogger(__name__)
 
 
 def generate_ai_report(
     summary: list[dict],
     alerts: list[dict],
 ) -> str | None:
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = settings.openai_api_key
 
     if not api_key:
         return None
-    
-    model = os.getenv("OPENAI_MODEL")
+
+    model = settings.openai_model
 
     input_data = {
         "summary": summary,
@@ -47,9 +44,8 @@ def generate_ai_report(
     {json.dumps(input_data, ensure_ascii=False, indent=2)}
     """
 
-
     try:
-        client = OpenAI(api_key=api_key, timeout=30.0, max_retries=2)    
+        client = OpenAI(api_key=api_key, timeout=30.0, max_retries=2)
 
         response = client.responses.create(
             model=model,
@@ -57,6 +53,7 @@ def generate_ai_report(
         )
 
         return response.output_text
-    
+
     except Exception:
+        logger.exception("AI report generation failed for model %s", model)
         return None

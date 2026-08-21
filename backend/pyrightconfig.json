@@ -1,0 +1,15 @@
+{
+  "include": ["app", "tests"],
+  "exclude": ["**/__pycache__", ".venv", "alembic/versions"],
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.14",
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "none",
+  "reportCallIssue": "none",
+  "reportArgumentType": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOperatorIssue": "none",
+  "reportIndexIssue": "none",
+  "reportReturnType": "none",
+  "reportOptionalSubscript": "none"
+}

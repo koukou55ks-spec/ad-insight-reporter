@@ -27,6 +27,7 @@ def make_valid_dataframe() -> pd.DataFrame:
         ]
     )
 
+
 def test_validate_dataframe_accepts_validate_data():
     df = make_valid_dataframe()
 
