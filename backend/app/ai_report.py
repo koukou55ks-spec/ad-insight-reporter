@@ -1,11 +1,11 @@
 import json
-import logging
 
 from openai import OpenAI
 
+from app.logging_config import get_logger
 from app.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def generate_ai_report(
@@ -54,6 +54,6 @@ def generate_ai_report(
 
         return response.output_text
 
-    except Exception:
-        logger.exception("AI report generation failed for model %s", model)
+    except Exception as exc:
+        logger.exception("AI report generation failed", model=model, error=str(exc))
         return None

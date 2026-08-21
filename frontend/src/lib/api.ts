@@ -1,36 +1,9 @@
-export type SummaryRow = {
-  campaign: string;
-  cost: number;
-  conversions: number;
-  ctr: number | null;
-  cpa: number | null;
-  roas: number | null;
-};
+import type { components } from "@/lib/api-types";
 
-export type AlertRow = {
-  campaign: string;
-  type: string;
-  message: string;
-  previous_value: string;
-  current_value: string;
-  unit: string;
-};
-
-export type ImportSuccessResponse = {
-  status: "success";
-  analysis_id: number;
-  file_name: string;
-  row_count: number;
-  summary: SummaryRow[];
-  alerts: AlertRow[];
-  ai_report: string | null;
-};
-
-type ImportErrorResponse = {
-  status: "error";
-  message: string;
-  validation_errors?: string[] | null;
-};
+export type SummaryRow = components["schemas"]["SummaryRow"];
+export type AlertRow = components["schemas"]["AlertRow"];
+export type ImportSuccessResponse = components["schemas"]["ImportSuccessResponse"];
+type ImportErrorResponse = components["schemas"]["ImportErrorResponse"];
 
 type ImportResponse = ImportSuccessResponse | ImportErrorResponse;
 

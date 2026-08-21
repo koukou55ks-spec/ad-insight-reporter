@@ -1,4 +1,3 @@
-import logging
 from decimal import Decimal
 from io import BytesIO
 from typing import Annotated, Literal
@@ -18,8 +17,9 @@ from app.analysis import (
     validate_dataframe,
 )
 from app.database import get_connection
+from app.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class CSVInputError(Exception):
@@ -31,13 +31,34 @@ class CSVInputError(Exception):
         super().__init__(message)
 
 
+class SummaryRow(BaseModel):
+    campaign: str
+    impressions: int
+    clicks: int
+    cost: float
+    conversions: int
+    revenue: float
+    ctr: float | None
+    cpa: float | None
+    roas: float | None
+
+
+class AlertRow(BaseModel):
+    campaign: str
+    type: str
+    message: str
+    previous_value: str
+    current_value: str
+    unit: str
+
+
 class ImportSuccessResponse(BaseModel):
     status: Literal["success"]
     analysis_id: int
     file_name: str
     row_count: int
-    summary: list[dict]
-    alerts: list[dict]
+    summary: list[SummaryRow]
+    alerts: list[AlertRow]
     ai_report: str | None = None
 
 
@@ -221,11 +242,22 @@ def root() -> dict[str, str]:
 async def import_csv_api(
     csv_file: Annotated[UploadFile, File()],
 ) -> ImportResponse:
+    file_name = csv_file.filename or "unknown.csv"
     file_content = await csv_file.read()
+    logger.info(
+        "CSV import started",
+        file_name=file_name,
+        content_length=len(file_content),
+    )
 
     try:
         df = parse_csv(file_content)
     except CSVInputError as exc:
+        logger.warning(
+            "CSV import rejected",
+            file_name=file_name,
+            reason=exc.message,
+        )
         return ImportErrorResponse(
             status="error",
             message=exc.message,
@@ -235,8 +267,15 @@ async def import_csv_api(
     # pandas, the database driver, and the OpenAI client are synchronous. Run
     # them outside the event loop so concurrent requests remain responsive.
     summary, alerts, ai_report = await run_in_threadpool(build_analysis, df)
-    file_name = csv_file.filename or "unknown.csv"
     import_job_id = await run_in_threadpool(save_import, df, file_name)
+    logger.info(
+        "CSV import completed",
+        file_name=file_name,
+        row_count=len(df),
+        analysis_id=import_job_id,
+        alert_count=len(alerts),
+        ai_report_generated=ai_report is not None,
+    )
     return ImportSuccessResponse(
         status="success",
         analysis_id=import_job_id,
@@ -255,8 +294,8 @@ def health_check() -> JSONResponse:
     try:
         connection = get_connection()
         connection.execute(text("SELECT 1"))
-    except Exception:
-        logger.exception("Database health check failed")
+    except Exception as exc:
+        logger.exception("Database health check failed", error=str(exc))
         return JSONResponse(
             status_code=503,
             content={"status": "error", "database": "unavailable"},
